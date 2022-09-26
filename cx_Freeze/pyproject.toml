@@ -1,0 +1,70 @@
+[build-system]
+requires = [
+    "setuptools>=59.0.1",
+    "wheel>=0.36.2",
+    "cx-logging>=3.0 ;sys_platform == 'win32'",
+]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 79
+target-version = ["py36"]
+exclude = "tests/samples/invalid_syntax.py"
+
+[tool.isort]
+profile = "black"
+line_length = 79
+skip_gitignore = true
+
+[tool.pylint]
+format.max-line-length = 79
+master.ignore="""
+darwintools.py,
+freezer.py,
+setupwriter.py
+"""
+master.ignore-paths = """
+^samples/.*.py$,
+^tests/samples/.*.py$,
+^doc/src/conf.py$
+"""
+master.py-version = "3.6"
+messages_control.disable = [
+    "duplicate-code",
+    "fixme",
+    "import-error",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-locals",
+    "too-many-nested-blocks",
+    "too-many-statements",
+    "wrong-import-order",
+]
+reports.output-format = "colorized"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.cibuildwheel]
+build-frontend = "build"
+build-verbosity = "1"
+
+[tool.cibuildwheel.linux]
+before-build = "(cd /opt/_internal && tar -xvf static-libs-for-embedding-only.tar.xz)"
+build = "cp3*-manylinux_*"
+archs = "x86_64 aarch64"
+repair-wheel-command = "auditwheel repair -L /bases/lib -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.macos]
+build = "cp3*-macosx_*"
+archs = "x86_64 universal2 arm64"
+skip = "cp38-macosx_universal2 cp38-macosx_arm64"
+dependency-versions = "latest"
+repair-wheel-command = """
+delocate-listdeps {wheel} &&
+delocate-wheel --require-archs {delocate_archs} -L bases/lib -w {dest_dir} {wheel}
+"""
